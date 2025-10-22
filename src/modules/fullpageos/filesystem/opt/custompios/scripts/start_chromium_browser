@@ -1,5 +1,7 @@
 #!/bin/bash
 
+xbindkeys &
+
 flags=(
    --kiosk
    --touch-events=enabled

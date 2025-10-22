@@ -1,3 +1,16 @@
+######################
+# IntelliJ
+######################
+.idea/
+*.iml
+*.iws
+*.ipr
+*.ids
+*.orig
+classes/
+out/
+######################
+
 src/config.local
 src/image/*.zip
 src/custompios_path
