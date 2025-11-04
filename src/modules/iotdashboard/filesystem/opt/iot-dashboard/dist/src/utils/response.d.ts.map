@@ -1,0 +1,1 @@
+{"version":3,"file":"response.d.ts","sourceRoot":"","sources":["../../../../iot-dashboard/src/utils/response.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAA;AAGlC,eAAO,MAAM,WAAW,GAAI,CAAC,EAAE,KAAK,QAAQ,EAAE,MAAM,CAAC,EAAE,aAAY,MAAY,KAAG,IAMjF,CAAA;AAED,eAAO,MAAM,SAAS,GAAI,KAAK,QAAQ,EAAE,SAAS,MAAM,EAAE,aAAY,MAAY,KAAG,IAMpF,CAAA"}

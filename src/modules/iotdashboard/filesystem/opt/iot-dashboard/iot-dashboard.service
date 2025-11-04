@@ -1,0 +1,13 @@
+[Unit]
+Description=IoT Dashboard
+After=network.target mosquitto.service
+
+[Service]
+Type=simple
+#User=monitor
+WorkingDirectory=/opt/iot-dashboard
+ExecStart=/usr/bin/node /opt/iot-dashboard/dist/server.js
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

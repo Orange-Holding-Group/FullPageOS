@@ -1,0 +1,14 @@
+[Unit]
+Description=Python Sensor Reader for IoT Dashboard
+After=network.target mosquitto.service
+
+[Service]
+Type=simple
+#User=monitor
+WorkingDirectory=/opt/iot-dashboard/sensor-readers/siemens
+ExecStart=/usr/bin/python /opt/iot-dashboard/sensor-readers/siemens/serial_reader.py
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

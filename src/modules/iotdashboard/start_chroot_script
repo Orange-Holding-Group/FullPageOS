@@ -1,0 +1,146 @@
+#!/usr/bin/env bash
+# Written by Hermes Lorenzo <hermeslm at gmail dot com>
+# GPL V3
+########
+set -x
+set -e
+
+source /common.sh
+
+apt update
+#apt-get upgrade -y
+
+# If Add Midnight Commander app
+if [ "$IOTDASHBOARD_ADD_MIDNIGHT_COMMANDER" == "yes" ]
+then
+    apt-get install -y mc
+fi
+
+if [ "$IOTDASHBOARD_QUIET_BOOT" == "yes" ]
+then
+    #sed -i 's/$/ fbcon=rotate:1 logo.nologo consoleblank=0 loglevel=3 vt.global_cursor_default=0 quiet/' /"${BASE_BOOT_MOUNT_PATH}"/cmdline.txt
+fi
+
+# Debug: Show what we're working with
+echo "=== DEBUG INFO ==="
+echo "Current directory: $(pwd)"
+echo "Module dir variable: ${IOTDASHBOARD_MODULE_DIR}"
+echo "Checking for filesystem directory..."
+
+# Check if filesystem exists relative to current location
+if [ -d "./filesystem/opt" ]; then
+    echo "Found ./filesystem/opt"
+    ls -laR ./filesystem/opt/
+elif [ -d "/filesystem/opt" ]; then
+    echo "Found /filesystem/opt"
+    ls -laR /filesystem/opt/
+else
+    echo "ERROR: Cannot find filesystem/opt directory"
+    echo "Searching from: $(pwd)"
+    find . -name "filesystem" -type d 2>/dev/null || echo "No filesystem dirs found"
+fi
+
+echo "=== UNPACKING FILES ==="
+unpack /filesystem/opt /opt
+
+# Verify unpack worked
+echo "=== VERIFYING UNPACK ==="
+if [ -d "/opt/iot-dashboard" ]; then
+    echo "SUCCESS: /opt/iot-dashboard exists"
+    ls -la /opt/iot-dashboard/
+else
+    echo "ERROR: /opt/iot-dashboard NOT found after unpack"
+    echo "Contents of /opt:"
+    ls -la /opt/
+    exit 1
+fi
+
+# Add monitor sensor app
+echo "Include Dashboard if in the config"
+if [ "$IOTDASHBOARD_INCLUDE_APP" == "yes" ]
+then
+    echo "Install QEMU for ARM emulator"
+    apt install -y qemu-user-static binfmt-support debootstrap qemu-utils parted dosfstools zip kpartx
+    update-binfmts --enable qemu-aarch64
+
+    echo "Installing Node..."
+    # Install NodeJS version 22 LTS as running tested
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+    apt install -y nodejs
+
+    # Install Mosquitto MQTT
+    echo "Installing Mosquitto MQTT..."
+    apt install -y mosquitto mosquitto-clients
+
+    # Navigate to project directory
+    pushd /opt/iot-dashboard
+
+    # Install project dependencies
+    echo "Installing Node dependencies (ARM native build)..."
+    # For Node.js:
+    npm ci --omit=dev
+    
+    # For Python:
+    echo "Installing Python dependencies..."
+    pushd /opt/iot-dashboard/sensor-readers/siemens
+    apt install -y python3-cups python3-cupshelpers python3-apt python3-smbc
+    # Install Python packages via apt
+    apt install -y python3-certifi \
+                   python3-chardet \
+                   python3-charset-normalizer \
+                   python3-colorzero \
+                   python3-cups \
+                   python3-dbus \
+                   python3-distro \
+                   python3-gpiozero \
+                   python3-idna \
+                   python3-lgpio \
+                   python3-libevdev \
+                   python3-paho-mqtt \
+                   python3-pigpio \
+                   python3-cairo \
+                   python3-pycryptodome \
+                   python3-gi \
+                   python3-serial \
+                   python3-smbc \
+                   python3-apt \
+                   python3-pyudev \
+                   python3-requests \
+                   python3-rpi-lgpio \
+                   python3-six \
+                   python3-smbus2 \
+                   python3-spidev \
+                   python3-toml \
+                   python3-urllib3
+
+    # Install systemd service from repository
+    echo "Installing systemd service..."
+    cp /opt/iot-dashboard/$IOTDASHBOARD_DASHBOARD_SERVICE /etc/systemd/system/
+    cp /opt/iot-dashboard/$IOTDASHBOARD_READER_SERVICE /etc/systemd/system/
+    echo "Service file copied from repository"
+
+    # Reload systemd and enable service
+    systemctl daemon-reload
+    systemctl_if_exists enable $IOTDASHBOARD_DASHBOARD_SERVICE
+    systemctl_if_exists enable $IOTDASHBOARD_READER_SERVICE
+
+    # Set proper permissions
+    # 1. Set ownership and directory permissions
+    chown -R root:root /opt/iot-dashboard
+    sudo find /opt/iot-dashboard -type d -exec chmod 775 {} \;
+    # 2. Set file permissions
+    sudo find /opt/iot-dashboard -type f -exec chmod 644 {} \;
+    # 3. Make sure the database directory is writable (SQLite needs this for journal files)
+    sudo chmod 775 /opt/iot-dashboard/dist/database
+
+    # Ensure service file has correct permissions
+    chmod 644 /etc/systemd/system/$IOTDASHBOARD_DASHBOARD_SERVICE
+    chmod 644 /etc/systemd/system/$IOTDASHBOARD_READER_SERVICE
+
+    # Update FullPageOS default URL
+#    sed -i "s|^http.*|http://localhost:8080|" /boot/fullpageos.txt
+
+    echo "--- IoT Dashboard installation complete ---"
+
+    popd
+fi

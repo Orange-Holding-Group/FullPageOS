@@ -1,0 +1,24 @@
+{
+  "serial": {
+    "port": "COM4",
+    "baudrate": 9600,
+    "timeout": 1,
+    "command": "R\n"
+  },
+  "mqtt": {
+    "host": "localhost",
+    "port": 1883,
+    "topic": "sensors/current"
+  },
+  "api": {
+    "url": "https://your-api.com/sensors",
+    "interval_minutes": 5,
+    "enabled": false
+  },
+  "local_monitor": {
+    "interval_seconds": 5
+  },
+  "display": {
+    "refresh_rate": 1
+  }
+}
