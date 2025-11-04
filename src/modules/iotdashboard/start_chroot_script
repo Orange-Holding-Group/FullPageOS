@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+# FullPageOS generation script
+# Helper script that runs in a Raspbian/others chroot to create the FullPageOS distro
+# Written by Guy Sheffer <guysoft at gmail dot com>
+# GPL V3
+########
+set -x
+set -e
+
+source /common.sh
+
+# Debug: Show what we're working with
+echo "=== DEBUG INFO ==="
+echo "Current directory: $(pwd)"
+echo "Module dir variable: ${IOTDASHBOARD_MODULE_DIR}"
+echo "Checking for filesystem directory..."
+
+# Check if filesystem exists relative to current location
+if [ -d "./filesystem/opt" ]; then
+    echo "Found ./filesystem/opt"
+    ls -laR ./filesystem/opt/
+elif [ -d "/filesystem/opt" ]; then
+    echo "Found /filesystem/opt"
+    ls -laR /filesystem/opt/
+else
+    echo "ERROR: Cannot find filesystem/opt directory"
+    echo "Searching from: $(pwd)"
+    find . -name "filesystem" -type d 2>/dev/null || echo "No filesystem dirs found"
+fi
+
+echo "=== UNPACKING FILES ==="
+unpack /filesystem/opt /opt
+
+# Verify unpack worked
+echo "=== VERIFYING UNPACK ==="
+if [ -d "/opt/iot-dashboard" ]; then
+    echo "SUCCESS: /opt/iot-dashboard exists"
+    ls -la /opt/iot-dashboard/
+else
+    echo "ERROR: /opt/iot-dashboard NOT found after unpack"
+    echo "Contents of /opt:"
+    ls -la /opt/
+    exit 1
+fi
+
+#apt-get update
+#apt-get upgrade -y
+
+# Add monitor sensor app
+echo "Include Dashboard if in the config"
+if [ "$IOTDASHBOARD_INCLUDE_APP" == "yes" ]
+then
+    echo "Installing Node..."
+    # Install NodeJS version 22 LTS as running tested
+    curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
+    apt install -y nodejs
+
+    # Install Mosquitto MQTT
+    echo "Installing Mosquitto MQTT..."
+    apt install -y mosquitto mosquitto-clients
+
+    # Load module config
+    #if [ -f /modules/iotdashboard/config ]; then
+    #    source /modules/iotdashboard/config
+    #    echo "Config loaded successfully" >> ${LOGFILE}
+    #else
+    #    echo "WARNING: Config file not found" >> ${LOGFILE}
+    #fi
+
+    # Navigate to project directory
+    pushd /opt/iot-dashboard
+
+    # Install project dependencies
+    echo "Installing dependencies..."
+    # For Node.js:
+    npm ci --omit=dev --ignore-scripts
+    
+    # For Python:
+    # pip3 install -r requirements.txt
+
+    # Install systemd service from repository
+    echo "Installing systemd service..."
+    if [ -f /opt/iot-dashboard/iot-dashboard.service ]; then
+        cp /opt/iot-dashboard/iot-dashboard.service /etc/systemd/system/
+        cp /opt/iot-dashboard/iot-sensor-reader.service /etc/systemd/system/
+        echo "Service file copied from repository"
+    else
+        echo "ERROR: Service file not found in repository!"
+        echo "Searched locations:"
+        echo "  - /opt/iot-dashboard/iot-dashboard.service"
+        exit 1
+    fi
+
+    # Reload systemd and enable service
+    systemctl daemon-reload
+    systemctl_if_exists enable iot-dashboard.service
+    systemctl_if_exists enable iot-sensor-reader.service
+
+    # Set proper permissions
+    chown -R root:root /opt/iot-dashboard
+    chmod -R 755 /opt/iot-dashboard
+
+    # Ensure service file has correct permissions
+    chmod 644 /etc/systemd/system/iot-dashboard.service
+    chmod 644 /etc/systemd/system/iot-sensor-reader.service
+
+    # Update FullPageOS default URL
+#    sed -i "s|^http.*|http://localhost:8080|" /boot/fullpageos.txt
+
+    echo "--- IoT Dashboard installation complete ---"
+
+    popd
+fi

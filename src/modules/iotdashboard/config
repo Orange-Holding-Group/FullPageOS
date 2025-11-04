@@ -1,0 +1,9 @@
+#!/usr/bin/env bash
+
+# Iot Sensor Monitor App repo & branch
+[ -n "$IOTDASHBOARD_REPO" ] || IOTDASHBOARD_REPO=git@github.com:Orange-Holding-Group/mm-iot.git
+[ -n "$IOTDASHBOARD_BRANCH" ] || IOTDASHBOARD_BRANCH=dev
+[ -n "$IOTDASHBOARD_PORT" ] || IOTDASHBOARD_PORT=8080
+[ -n "$IOTDASHBOARD_INCLUDE_APP" ] || IOTDASHBOARD_INCLUDE_APP=yes
+[ -n "$IOTDASHBOARD_SERVICE" ] || IOTDASHBOARD_SERVICE=iot-dashboard.service
+[ -n "$IOTDASHBOARD_READER_SERVICE" ] || IOTDASHBOARD_READER_SERVICE=iot-sensor-reader.service

@@ -1,0 +1,1 @@
+{"version":3,"file":"errorHandler.d.ts","sourceRoot":"","sources":["../../../../iot-dashboard/src/middleware/errorHandler.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,OAAO,EAAE,QAAQ,EAAE,MAAM,SAAS,CAAA;AAG3C,UAAU,QAAS,SAAQ,KAAK;IAC9B,UAAU,CAAC,EAAE,MAAM,CAAA;CACpB;AAED,eAAO,MAAM,YAAY,GAAI,KAAK,QAAQ,EAAE,MAAM,OAAO,EAAE,KAAK,QAAQ,KAAG,IAa1E,CAAA"}
