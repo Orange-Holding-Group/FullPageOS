@@ -23,3 +23,5 @@ src/workspace*/*
 src/variants/*
 !src/variants/no-acceleration
 /docker/
+.env
+/src/modules/iotdashboard/filesystem/opt/iot-dashboard
